@@ -1,3 +1,6 @@
+We would use Kraken-VideoChat to do our solution.
+The brief for kraken-videochat will be shown below:
+
 # kraken-videochat
 
 Source code for a small tutorial on how to wire up a webRTC video chat. The tutorial is here:
