@@ -1,3 +1,4 @@
-.build
 node_modules
-public/js
+*.bundle.js
+socket.io.js
+latest.js

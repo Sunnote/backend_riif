@@ -1,32 +1,69 @@
-We would use Kraken-VideoChat to do our solution.
-The brief for kraken-videochat will be shown below:
+# SimpleWebRTC - World's easiest WebRTC lib
 
-# kraken-videochat
 
-Source code for a small tutorial on how to wire up a webRTC video chat. The tutorial is here:
+Want to see it in action? Check out the demo: https://talky.io/
 
-http://www.webdevinthecloud.com/blog/2013/12/19/building-a-webrtc-video-chat-service-on-nodejs-and-krakenjs
 
-This is a simple webrtc based video chat developed for the krakenjs web application framework: https://github.com/paypal/kraken-js. The webRTC and socket connection code is based on code found here:
+## It's so easy:
 
-https://bitbucket.org/webrtc/codelab/src/ace46299dbf95217060b170a3c11c3099acedc59
+### 1. Some basic html
 
-It is strongly recommended that if you wish to learn webRTC that you follow the steps outlined in that tutorial before you attempt to use this code to wire it up in krakenjs. 
+```html
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="http://simplewebrtc.com/latest.js"></script> 
+        <style>
+            #remoteVideos video {
+                height: 150px;
+            }
+            #localVideo {
+                height: 150px;
+            }
+        </style>
+    </head>
+    <body>
+        <video id="localVideo"></video>
+        <div id="remoteVideos"></div>
+    </body>
+</html>
 
-This is not, by any means, production-ready software. I cannot guarantee that if you use this software bad things won't happen. These can range from the complete elimination of everything near and dear to you, to a sudden loss in your ability to spell. And anything else you can think of.
+```
 
-In other words, this repository is simply an experiment, a playground, to test how well the kraken framework plays with webRTC and sockets. Feel free to fork off this and do whatever you wish with it. The code here is issued as an open MIT open source license, at the end of this document.
+### 2. Create our WebRTC object
 
-For instructions on how to use this, please see http://www.webdevinthecloud.com/blog/2013/12/19/building-a-webrtc-video-chat-service-on-nodejs-and-krakenjs
+```js
+var webrtc = new SimpleWebRTC({
+    // the id/element dom element that will hold "our" video
+    localVideoEl: 'localVideo',
+    // the id/element dom element that will hold remote videos
+    remoteVideosEl: 'remoteVideos',
+    // immediately ask for camera access
+    autoRequestMedia: true
+});
+```
 
-For you legal beagles out there:
+### 3. Tell it to join a room when ready
 
-The MIT License (MIT)
+```js
+// we have to wait until it's ready
+webrtc.on('readyToCall', function () {
+    // you can name it anything
+    webrtc.joinRoom('your awesome room name');
+});
+```
 
-Copyright (c) 2013 Wyanet LLC
+### Available options
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+`peerConnectionConfig` - Set this to specify your own STUN and TURN servers. By default, SimpleWebRTC uses Google's public STUN server (`stun.l.google.com:19302`), which is intended for public use according to: https://twitter.com/HenrikJoreteg/status/354105684591251456
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Note that you will most likely also need to run your own TURN servers. See http://www.html5rocks.com/en/tutorials/webrtc/infrastructure/ for a basic tutorial. 
+
+## Got questions?
+
+Join the SimpleWebRTC discussion list: 
+
+http://lists.andyet.com/mailman/listinfo/simplewebrtc
+
+## API
