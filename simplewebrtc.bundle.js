@@ -12,7 +12,7 @@ function SimpleWebRTC(opts) {
     var self = this;
     var options = opts || {};
     var config = this.config = {
-            url: 'http://107.170.100.135:8001',
+            url: 'http://signaling.simplewebrtc.com:8888',
             debug: false,
             localVideoEl: '',
             remoteVideosEl: '',
