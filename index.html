@@ -1,167 +1,256 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>RiiF Call Demo</title>
-    </head>
-    <body>
-        <h1 id="title">Start a room</h1>
-        <style>
-            .videoContainer {
-                position: relative;
-                width: 200px;
-                height: 150px;
-            }
-            .videoContainer video {
-                position: absolute;
-                width: 100%;
-                height: 100%;
-            }
-            .volume_bar {
-                position: absolute;
-                width: 5px;
-                height: 0px;
-                right: 0px;
-                bottom: 0px;
-                background-color: #12acef;
-            }
-        </style>
-        <button id="screenShareButton"></button>
-        <p id="subTitle"></p>
-        <form id="createRoom">
-            <input id="sessionInput"/>
-            <button type="submit">Create it!</button>
-        </form>
-        <div class="videoContainer">
-            <video id="localVideo" style="height: 150px;" oncontextmenu="return false;"></video>
-            <div id="localVolume" class="volume_bar"></div>
-        </div>
-        <div id="remotes"></div>
-        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
-        <script src="http://107.170.100.135:8001/socket.io.js"></script>
-        <script src="http://107.170.100.135:8001/simplewebrtc.bundle.js"></script>
-        <script>
-            // grab the room from the URL
-            var room = location.search && location.search.split('?')[1];
+<head>
+<title>Video Call Demo</title>
+<style>
+    .videoContainer video {
+        width: 100%;
+    }
+    .volume_bar {
+        position: absolute; width: 5px; height: 0px; right: 0px; bottom: 0px; background-color: #12acef;
+    }
+    #owner {
+        float: left;
+        position: relative;
+        width: 15%;
+    }
+    #remotes { float: left; width: 80%; margin-left: 5%; position: relative; }
+    #remotes .videoContainer { float: left; width: 12%; margin-right: 1%; position: relative; }
+    .bingo_drag {
+        position:absolute; top:0; left:0;
+        width:100%; height:inherit;
+    }
+</style>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+<script src="socket.io.js"></script> <!--http://107.170.100.135:8001/-->
+<script src="simplewebrtc.bundle.js"></script>
+<!--<script src="jquery.touchwipe.1.1.1.js"></script>-->
+<script src="http://labs.rampinteractive.co.uk/touchSwipe/jquery.touchSwipe.min.js"></script>
+<script type="text/javascript">
+/*$(document).ready(function() {
+ $('#owner').find('video').height($('#owner').width());
+ });*/
 
-            // create our webrtc connection
-            var webrtc = new SimpleWebRTC({
-                // the id/element dom element that will hold "our" video
-                localVideoEl: 'localVideo',
-                // the id/element dom element that will hold remote videos
-                remoteVideosEl: '',
-                // immediately ask for camera access
-                autoRequestMedia: true,
-                debug: false,
-                detectSpeakingEvents: true,
-                autoAdjustMic: false
-            });
+// grab the room from the URL
+var room = 'RiiFCall'; //location.search && location.search.split('?')[1];
+// create our webrtc connection
+var webrtc = new SimpleWebRTC({
+    // the id/element dom element that will hold "our" video
+    localVideoEl: 'localVideo',
+    // the id/element dom element that will hold remote videos
+    remoteVideosEl: '',
+    // immediately ask for camera access
+    autoRequestMedia: true,
+    debug: false,
+    detectSpeakingEvents: true,
+    autoAdjustMic: false
+});
 
-            // when it's ready, join if we got a room from the URL
-            webrtc.on('readyToCall', function () {
-                // you can name it anything
-                if (room) webrtc.joinRoom(room);
-            });
+// when it's ready, join if we got a room from the URL
+webrtc.on('readyToCall', function () {
+    // you can name it anything
+    if (room) webrtc.joinRoom(room);
+});
 
-            function showVolume(el, volume) {
-                if (!el) return;
-                if (volume < -45) { // vary between -45 and -20
-                    el.style.height = '0px';
-                } else if (volume > -20) {
-                    el.style.height = '100%';
-                } else {
-                    el.style.height = '' + Math.floor((volume + 100) * 100 / 25 - 220) + '%';
-                }
-            }
-            webrtc.on('channelMessage', function (peer, label, data) {
-                if (data.type == 'volume') {
-                    showVolume(document.getElementById('volume_' + peer.id), data.volume);
-                }
-            });
-            webrtc.on('videoAdded', function (video, peer) {
-                console.log('video added', peer);
-                var remotes = document.getElementById('remotes');
-                if (remotes) {
-                    var d = document.createElement('div');
-                    d.className = 'videoContainer';
-                    d.id = 'container_' + webrtc.getDomId(peer);
-                    d.appendChild(video);
-                    var vol = document.createElement('div');
-                    vol.id = 'volume_' + peer.id;
-                    vol.className = 'volume_bar';
-                    video.onclick = function () {
-                        video.style.width = video.videoWidth + 'px';
-                        video.style.height = video.videoHeight + 'px';
-                    };
-                    d.appendChild(vol);
-                    remotes.appendChild(d);
-                }
-            });
-            webrtc.on('videoRemoved', function (video, peer) {
-                console.log('video removed ', peer);
-                var remotes = document.getElementById('remotes');
-                var el = document.getElementById('container_' + webrtc.getDomId(peer));
-                if (remotes && el) {
-                    remotes.removeChild(el);
-                }
-            });
-            webrtc.on('volumeChange', function (volume, treshold) {
-                //console.log('own volume', volume);
-                showVolume(document.getElementById('localVolume'), volume);
-            });
+function showVolume(el, volume) {
+    if (!el) return;
+    if (volume < -45) { // vary between -45 and -20
+        el.style.height = '0px';
+    } else if (volume > -20) {
+        el.style.height = '100%';
+    } else {
+        el.style.height = '' + Math.floor((volume + 100) * 100 / 25 - 220) + '%';
+    }
+}
+webrtc.on('channelMessage', function (peer, label, data) {
+    if (data.type == 'volume') {
+        showVolume(document.getElementById('volume_' + peer.id), data.volume);
+    }
+});
+webrtc.on('videoAdded', function (video, peer) {
+    console.log('video added', peer);
+    var remotes = document.getElementById('remotes');
+    if (remotes) {
+        var d = document.createElement('div');
+        d.className = 'videoContainer';
+        d.id = 'container_' + webrtc.getDomId(peer);
 
-            // Since we use this twice we put it here
-            function setRoom(name) {
-                $('form').remove();
-                $('h1').text(name);
-                $('#subTitle').text('Link to join: ' + location.href);
-                $('body').addClass('active');
-            }
+        d.appendChild(video);
 
-            if (room) {
-                setRoom(room);
+        // Add drag item
+        var drag = document.createElement('div');
+        drag.className = 'bingo_drag';
+        d.appendChild(drag);
+
+        var vol = document.createElement('div');
+        vol.id = 'volume_' + peer.id;
+        vol.className = 'volume_bar';
+        video.onclick = function () {
+            //video.style.width = video.videoWidth + 'px';
+            //video.style.height = video.videoHeight + 'px';
+        };
+        d.appendChild(vol);
+        remotes.appendChild(d);
+
+        // Has new remote, reload view
+        reload_slide(d);
+        swipeAction(d);
+    }
+
+    // Unset property clear of all videoContainer
+    $('div[class=videoContainer]').css('clear', '');
+    $('div[class=videoContainer]').each(function(index, elm) {
+        if(index % 3 === 0) {
+            $(elm).css({'clear' : 'both'});
+        }
+    });
+});
+
+function reload_slide(obj) {
+    // Find last user join
+    $('.videoContainer.last').animate({
+        width: '12%', 'margin-right' : '1%'
+    }).removeClass('last').css({'right' : '', 'position' : 'relative'});
+
+    //var _h = $(window).height() - $('#title').height();
+    $(obj).css({ 'position' : 'absolute', 'margin-right' : '0'});
+    $(obj).animate({
+        width: '50%', right : '0'
+    }, {
+        duration: 2000,
+        complete: function() {
+            // Enable swipe
+            swipe = true;
+        }
+    }).addClass('last');
+
+}
+
+webrtc.on('videoRemoved', function (video, peer) {
+    console.log('video removed ', peer);
+    var remotes = document.getElementById('remotes');
+    var el = document.getElementById('container_' + webrtc.getDomId(peer));
+    if (remotes && el) {
+        remotes.removeChild(el);
+        reload_slide($('.videoContainer').last());
+    }
+});
+webrtc.on('volumeChange', function (volume, treshold) {
+    //console.log('own volume', volume);
+    showVolume(document.getElementById('localVolume'), volume);
+});
+
+// Since we use this twice we put it here
+function setRoom(name) {
+    $('form').remove();
+    $('h1').text(name);
+    $('#subTitle').text('Link to join: ' + location.href);
+    $('body').addClass('active');
+}
+
+if (room) {
+    setRoom(room);
+} else {
+    $('form').submit(function () {
+        var val = $('#sessionInput').val().toLowerCase().replace(/\s/g, '-').replace(/[^A-Za-z0-9_\-]/g, '');
+        webrtc.createRoom(val, function (err, name) {
+            console.log(' create room cb', arguments);
+
+            var newUrl = location.pathname + '?' + name;
+            if (!err) {
+                history.replaceState({foo: 'bar'}, null, newUrl);
+                setRoom(name);
             } else {
-                $('form').submit(function () {
-                    var val = $('#sessionInput').val().toLowerCase().replace(/\s/g, '-').replace(/[^A-Za-z0-9_\-]/g, '');
-                    webrtc.createRoom(val, function (err, name) {
-                        console.log(' create room cb', arguments);
-                    
-                        var newUrl = location.pathname + '?' + name;
-                        if (!err) {
-                            history.replaceState({foo: 'bar'}, null, newUrl);
-                            setRoom(name);
-                        } else {
-                            console.log(err);
-                        }
-                    });
-                    return false;          
-                });
+                console.log(err);
             }
+        });
+        return false;
+    });
+}
 
-            var button = $('#screenShareButton'),
-                setButton = function (bool) {
-                    button.text(bool ? 'share screen' : 'stop sharing');
-                };
-            webrtc.on('localScreenStopped', function () {
+var button = $('#screenShareButton'),
+        setButton = function (bool) {
+            button.text = (bool ? 'share screen' : 'stop sharing');
+        };
+webrtc.on('localScreenStopped', function () {
+    setButton(true);
+});
+
+setButton(true);
+
+button.click(function () {
+    if (webrtc.getLocalScreen()) {
+        webrtc.stopScreenShare();
+        setButton(true);
+    } else {
+        webrtc.shareScreen(function (err) {
+            if (err) {
                 setButton(true);
-            });
+            } else {
+                setButton(false);
+            }
+        });
 
-            setButton(true);
+    }
+});
 
-            button.click(function () {
-                if (webrtc.getLocalScreen()) {
-                    webrtc.stopScreenShare();
-                    setButton(true);
-                } else {
-                    webrtc.shareScreen(function (err) {
-                        if (err) {
-                            setButton(true);
-                        } else {
-                            setButton(false);
-                        }
-                    });
-                    
-                }
-            });
-        </script>
-    </body>
+// Swipe action
+var swipe = true;
+function swipeAction(obj) {
+    $(obj).swipe({
+        //Generic swipe handler for all directions
+        /*swipe:function(event, direction, distance, duration, fingerCount, fingerData) {
+         //alert(direction);
+         },*/
+        swipeLeft: function(event, direction, distance, duration, fingerCount) {
+            if(swipe) {
+                swipe = false;
+                reload_slide(this);
+            }
+        },
+        swipeRight: function() {
+            if(swipe) {
+                swipe = false;
+                reload_slide(this);
+            }
+        },
+        swipeUp: function() {
+            if(swipe) {
+                swipe = false;
+                reload_slide(this);
+            }
+        },
+        swipeDown: function() {
+            if(swipe) {
+                swipe = false;
+                reload_slide(this);
+            }
+        },
+        //Default is 75px, set to 0 for demo so any distance triggers swipe
+        threshold:0
+    });
+}
+
+$(document).ready(function() {
+    /*setTimeout(reload_slide, 2000, $('.videoContainer'));*/
+    swipeAction($('.videoContainer'));
+    // Share screen
+    webrtc.shareScreen(function(err) {
+        // Do something
+        // ...
+    });
+    swipeAction($('.test'));
+});
+
+</script>
+</head>
+<body>
+<h1 id="title">Video Call Demo:</h1>
+<div id="remotes">
+    <div class="videoContainer">
+        <video id="localVideo" oncontextmenu="return false;"></video>
+        <div id="localVolume" class="volume_bar"></div>
+    </div>
+</div>
+</body>
 </html>
